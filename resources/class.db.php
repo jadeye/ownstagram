@@ -16,20 +16,20 @@ class DB {
 		$this->pass = $pass;
 		$this->name = $name;
 		$this->characterset = $characterset;
-		$this->link = mysql_pconnect($this->host, $this->user, $this->pass);
+		$this->link = mysqli_connect($this->host, $this->user, $this->pass, $this->name);
 		unset($this->pass);
 		
 		if($this->characterset!="") {
 			$this->setCharaterSet($this->characterset);
 		}
 		
-		return $this->res = mysql_select_db($this->name, $this->link );
+		return $this->res = mysqli_select_db($this->link, $this->name);
 	}
 	
 	function setCharaterSet($cs) {
-		mysql_query('SET character_set_results = '.$cs, $this->link);
-		mysql_query('SET character_set_client = '.$cs, $this->link);
-		mysql_query("SET NAMES '".$cs."'", $this->link);
+		mysqli_query($this->link, 'SET character_set_results = '.$cs);
+		mysqli_query($this->link, 'SET character_set_client = '.$cs);
+		mysqli_query($this->link, "SET NAMES '".$cs."'");
 	}
 	
 	function close(){
@@ -55,14 +55,14 @@ class DB {
 		}
 
 		#$T = microtime(true);
-		$res = $this->res = mysql_query($str, $this->link);
-		if ($this->develop && mysql_errno()) {
+		$res = $this->res = mysqli_query($this->link, $str);
+		if ($this->develop && mysqli_errno()) {
 			try {
 				throw new Exception;
 			} catch(Exception $e) {
 				 $T = $e->getTrace();
 			}
-			die("MySQL error ".mysql_errno().": ".mysql_error()."\n<br>When executing:<br>\n$str\n<br><pre>".print_r($T,1)."</pre>");
+			die("MySQL error ".mysqli_errno().": ".mysql_error()."\n<br>When executing:<br>\n$str\n<br><pre>".print_r($T,1)."</pre>");
 		}
 		if(!stristr($str, 'LAST_INSERT_ID')) $this->lastQuery = $str;
 		#$T = microtime(true)-$T;
@@ -70,11 +70,11 @@ class DB {
 		return $res;
 	}
 	function fetch(){
-		return $this->data = mysql_fetch_assoc($this->res);
+		return $this->data = mysqli_fetch_assoc($this->res);
 	}
 	function fetchAll(){
 		$data = array();
-		while ($this->data = mysql_fetch_assoc($this->res)) {
+		while ($this->data = mysqli_fetch_assoc($this->res)) {
 			$data[] = $this->data;
 		}
 		return $data;
@@ -247,7 +247,7 @@ class DBDebug extends DB {
 	// {{{
 	function query($str){
 		$T0 = microtime(true);
-		$this->res = mysql_query($str, $this->link);
+		$this->res = mysqli_query($this->link, $str);
 		$T1 = microtime(true)-$T0;
 		if($T1>0.05) {
 			$str = str_replace("\n", ' ', $str);
